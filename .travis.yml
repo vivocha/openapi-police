@@ -1,0 +1,19 @@
+dist: trusty
+language: node_js
+node_js:
+  - lts/*
+branches:
+  only:
+    - master
+notifications:
+  email: false
+before_install:
+
+before_script:
+  - npm prune
+script:
+  - npm run build:all
+  - npm run cover
+  - npm run check-coverage
+after_success:
+  - npm run semantic-release
