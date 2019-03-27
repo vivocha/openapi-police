@@ -538,7 +538,6 @@ describe('ParameterObject', function() {
             }
           };
           const parameter = new ParameterObject(await refs.parse(spec, opts));
-          debugger;
           await parameter.validate('').should.eventually.equal(null);
           await parameter.validate('blue').should.be.rejectedWith(ValidationError, 'type');
         });
