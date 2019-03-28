@@ -73,9 +73,6 @@
     "jsonpolice": "^8.0.1",
     "jsonref": "^5.1.0"
   },
-  "publishConfig": {
-    "access": "restricted"
-  },
   "config": {
     "commitizen": {
       "path": "./node_modules/cz-conventional-changelog"
