@@ -66,7 +66,7 @@ function tuplesToArray(data: string[]): any {
 
 export class ParameterObject extends SchemaObject {
   constructor(protected parameter: OpenAPIV3.ParameterObject) {
-    super(parameter.schema || true);
+    super(parameter.schema as OpenAPIV3.SchemaObject || true);
     if (!(this.parameter.in in stylesByLocation)) {
       throw new ParameterError(Schema.scope(this.parameter), 'in', this.parameter.in);
     }
