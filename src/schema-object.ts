@@ -101,7 +101,7 @@ export class SchemaObject extends Schema {
     }
 
     if (typeof subSpec === 'undefined') {
-      throw Schema.error(spec.discriminator, 'subschema');
+      throw Schema.error(spec.discriminator, 'schema');
     } else {
       if (subSpec.allOf) {
         subSpec = Object.assign({}, subSpec);

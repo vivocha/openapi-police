@@ -70,7 +70,7 @@
     "yaml": "^1.4.0"
   },
   "dependencies": {
-    "jsonpolice": "^8.0.2",
+    "jsonpolice": "^8.0.3",
     "jsonref": "^5.1.1"
   },
   "config": {

@@ -2,7 +2,7 @@ import * as chai from 'chai';
 import * as chaiAsPromised from 'chai-as-promised';
 import * as refs from 'jsonref';
 import * as YAML from 'yaml';
-import { ValidationError } from '../../dist/index';
+import { SchemaError, ValidationError } from '../../dist/index';
 import { SchemaObject } from '../../dist/schema-object';
 
 chai.should();
@@ -19,7 +19,7 @@ describe('SchemaObject', function() {
           type: [ 'null', 'string' ]
         };
         const schema = new SchemaObject(await refs.parse(spec, opts));
-        return schema.validate({}).should.be.rejectedWith(ValidationError, 'schema');
+        return schema.validate({}).should.be.rejectedWith(SchemaError, 'type');
       });
       it('should validate a primitive value', async function() {
         const opts = { scope: 'http://example.com' };
@@ -48,7 +48,7 @@ describe('SchemaObject', function() {
           format: 10
         };
         const schema = new SchemaObject(await refs.parse(spec, opts));
-        return schema.validate('abc').should.be.rejectedWith(ValidationError, 'schema');
+        return schema.validate('abc').should.be.rejectedWith(SchemaError, 'format');
       });
       it('should validate with format', async function() {
         const opts = { scope: 'http://example.com' };
@@ -67,13 +67,13 @@ describe('SchemaObject', function() {
           discriminator: null
         };
         const schema1 = new SchemaObject(await refs.parse(spec1, opts));
-        await schema1.validate({}).should.be.rejectedWith(ValidationError, 'schema');
+        await schema1.validate({}).should.be.rejectedWith(SchemaError, 'discriminator');
 
         const spec2 = {
           discriminator: 'test'
         };
         const schema2 = new SchemaObject(await refs.parse(spec2, opts));
-        await schema2.validate({}).should.be.rejectedWith(ValidationError, 'schema');
+        await schema2.validate({}).should.be.rejectedWith(SchemaError, 'discriminator');
 
         const spec3 = {
           discriminator: {
@@ -81,7 +81,7 @@ describe('SchemaObject', function() {
           }
         };
         const schema3 = new SchemaObject(await refs.parse(spec3, opts));
-        return schema3.validate({}).should.be.rejectedWith(ValidationError, 'schema');
+        return schema3.validate({}).should.be.rejectedWith(SchemaError, 'discriminator');
       });
       it('should fail if the discriminator property is not a string', async function() {
         const opts = { scope: 'http://example.com' };
@@ -104,7 +104,7 @@ describe('SchemaObject', function() {
           }
         };
         const schema = new SchemaObject(await refs.parse(spec, opts));
-        return schema.validate({ type: 'test' }).should.be.rejectedWith(ValidationError, 'schema');
+        return schema.validate({ type: 'test' }).should.be.rejectedWith(SchemaError, 'mapping');
       });
       it('should validate the examples in https://github.com/OAI/OpenAPI-Specification/blob/master/versions/3.0.2.md#discriminatorObject', async function() {
         const opts = { scope: 'http://example.com' };
@@ -201,7 +201,7 @@ components:
         }).should.be.fulfilled;
         await responseSchema.validate({
           'petType': 'err'
-        }).should.be.rejectedWith(ValidationError, 'schema');
+        }).should.be.rejectedWith(SchemaError, 'schema');
 
         const otherSchema = new SchemaObject(parsedSpec.components.responses.OtherResponseType);
         await otherSchema.validate({

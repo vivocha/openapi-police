@@ -1,6 +1,6 @@
 import * as chai from 'chai';
 import * as chaiAsPromised from 'chai-as-promised';
-import { ValidationError } from 'jsonpolice';
+import { SchemaError, ValidationError } from 'jsonpolice';
 import * as refs from 'jsonref';
 import { ParameterError } from '../../dist/errors';
 import { ParameterObject } from '../../dist/parameter';
@@ -102,7 +102,7 @@ describe('ParameterObject', function() {
           }
         };
         const parameter = new ParameterObject(await refs.parse(spec, opts));
-        return parameter.validate({}).should.be.rejectedWith(ValidationError, 'schema');
+        return parameter.validate({}).should.be.rejectedWith(SchemaError, 'type');
       });
       it('should validate a primitive value', async function() {
         const opts = { scope: 'http://example.com' };
@@ -149,7 +149,7 @@ describe('ParameterObject', function() {
         }
       };
       const parameter = new ParameterObject(await refs.parse(spec, opts));
-      return parameter.validate('test').should.be.rejectedWith(ValidationError, 'schema');
+      return parameter.validate('test').should.be.rejectedWith(ParameterError, 'style');
     });
 
     describe('object', function() {
@@ -221,7 +221,7 @@ describe('ParameterObject', function() {
           const opts = { scope: 'http://example.com' };
           const spec = {
             style: 'form',
-            in: 'query',
+            in: 'cookie',
             schema: {
               type: 'object'
             }
@@ -235,7 +235,7 @@ describe('ParameterObject', function() {
           const opts = { scope: 'http://example.com' };
           const spec = {
             style: 'form',
-            in: 'query',
+            in: 'cookie',
             explode: true,
             schema: {
               type: 'object'
@@ -319,7 +319,7 @@ describe('ParameterObject', function() {
             }
           };
           const parameter = new ParameterObject(await refs.parse(spec, opts));
-          await parameter.validate('.R.100.G.200.B.150').should.be.rejectedWith(ValidationError, 'schema');
+          await parameter.validate('.R.100.G.200.B.150').should.be.rejectedWith(Error, /not implemented/);
         });
       });
     });
@@ -392,7 +392,7 @@ describe('ParameterObject', function() {
           const opts = { scope: 'http://example.com' };
           const spec = {
             style: 'form',
-            in: 'query',
+            in: 'cookie',
             schema: {
               type: 'array'
             }
@@ -406,7 +406,7 @@ describe('ParameterObject', function() {
           const opts = { scope: 'http://example.com' };
           const spec = {
             style: 'form',
-            in: 'query',
+            in: 'cookie',
             explode: true,
             schema: {
               type: 'array'
@@ -516,7 +516,7 @@ describe('ParameterObject', function() {
           const opts = { scope: 'http://example.com' };
           const spec = {
             style: 'form',
-            in: 'query',
+            in: 'cookie',
             schema: {
               type: 'boolean'
             }

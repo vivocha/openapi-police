@@ -17,8 +17,8 @@ const typesByStyle = {
 };
 
 const stylesByLocation = {  
-  path: [ 'simple', 'matrix', 'label' ],
-  query: [ 'form', 'spaceDelimited', 'pipeDelimited', 'deepObject' ],
+  path: [ 'simple', 'label', 'matrix' ],
+  query: [ 'simple', 'spaceDelimited', 'pipeDelimited', 'deepObject' ],
   cookie: ['form' ],
   header: [ 'simple' ]
 };
@@ -193,7 +193,7 @@ export class ParameterObject extends SchemaObject {
       if (type === 'boolean') {
         out = (out === 'true' || out === '1');
       } else if (type === 'number' || type === 'integer') {
-        out = parseInt(out);
+        out = parseFloat(out);
       }
     } else if (out === undefined && type === 'null') {
       out = null;
@@ -201,12 +201,12 @@ export class ParameterObject extends SchemaObject {
     return out;
   }
 
-  async validate(data: any, opts: ValidationOptions = {}): Promise<any> {
+  async validate(data: any, opts: ValidationOptions = {}, path: string = ''): Promise<any> {
     if (this.parameter.content) {
       // TODO validate using the MediaTypeValidator for the correct media type 
       throw new Error('parameter.content not implemented');
     } else {
-      return super.validate(data, opts);
+      return super.validate(data, opts, path);
     }
   }
   protected typeValidator(data: any, spec: any, path: string, opts: ValidationOptions): any {
@@ -220,7 +220,7 @@ export class ParameterObject extends SchemaObject {
       }
       if (typeof data === 'undefined') {
         if (this.parameter.required) {
-          throw new ValidationError('', Schema.scope(spec), 'required');
+          throw new ValidationError(path, Schema.scope(spec), 'required');
         } else {
           return undefined;
         }
