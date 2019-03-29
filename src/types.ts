@@ -259,29 +259,33 @@ export namespace OpenAPIV3 {
     in: string;
   }
 
+  export interface OAuth2SecurityScopes {
+    [scope: string]: string
+  }
+
   export interface OAuth2SecurityScheme {
     type: 'oauth2';
     flows: {
       implicit?: {
         authorizationUrl: string;
         refreshUrl?: string;
-        scopes: { [scope: string]: string };
+        scopes: OAuth2SecurityScopes;
       };
       password?: {
         tokenUrl: string;
         refreshUrl?: string;
-        scopes: { [scope: string]: string };
+        scopes: OAuth2SecurityScopes;
       };
       clientCredentials?: {
         tokenUrl: string;
         refreshUrl?: string;
-        scopes: { [scope: string]: string };
+        scopes: OAuth2SecurityScopes;
       };
       authorizationCode?: {
         authorizationUrl: string;
         tokenUrl: string;
         refreshUrl?: string;
-        scopes: { [scope: string]: string };
+        scopes: OAuth2SecurityScopes;
       };
     };
   }
