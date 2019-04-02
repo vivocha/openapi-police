@@ -524,7 +524,11 @@ describe('ParameterObject', function() {
           const parameter = new ParameterObject(await refs.parse(spec, opts));
           await parameter.validate('').should.eventually.equal(undefined);
           await parameter.validate('color=').should.eventually.equal(undefined);
+          await parameter.validate('color=true').should.eventually.equal(true);
+          await parameter.validate('color=1').should.eventually.equal(true);
           await parameter.validate('color=false').should.eventually.equal(false);
+          await parameter.validate('color=0').should.eventually.equal(false);
+          await parameter.validate('color=aaa').should.be.rejectedWith(ValidationError, 'type');
         });
       });
       describe('simple', function() {

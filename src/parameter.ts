@@ -191,7 +191,11 @@ export class ParameterObject extends SchemaObject {
     let out = this.parseStyle(data, type);
     if (typeof out === 'string') {
       if (type === 'boolean') {
-        out = (out === 'true' || out === '1');
+        if (out === 'true' || out === '1') {
+          out = true;
+        } else if (out === 'false' || out === '0') {
+          out = false;
+        }
       } else if (type === 'number' || type === 'integer') {
         out = parseFloat(out);
       }
