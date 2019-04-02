@@ -44,8 +44,7 @@ export class SchemaObject extends Schema {
         'allOf',
         'anyOf',
         'oneOf',
-        'not',
-        'default'
+        'not'
       ]);
     }
     return this._validators;
