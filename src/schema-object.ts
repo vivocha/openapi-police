@@ -5,6 +5,7 @@ import { resolve as resolveRefs } from 'jsonref/dist/ref';
 import { OpenAPIV3 } from './types';
 
 export interface SchemaObjectOptions extends ValidationOptions {
+  coerceTypes?: boolean;
   parseStyle?: boolean;
   contentType?: string;
 }
@@ -54,12 +55,35 @@ export class SchemaObject extends Schema {
     }
     return this._validators;
   }
+  protected coerceToType(data: string, type: string): any {
+    let out: any = data;
+    if (typeof out === 'string') {
+      if (type === 'boolean') {
+        if (out === 'true' || out === '1') {
+          out = true;
+        } else if (out === 'false' || out === '0') {
+          out = false;
+        }
+      } else if (type === 'number' || type === 'integer') {
+        out = parseFloat(out);
+      }
+    } else if (out === undefined && type === 'null') {
+      out = null;
+    }
+    return out;
+  }
+
   protected typeValidator(data: any, spec: any, path: string, opts: SchemaObjectOptions): any {
     if (typeof spec.type !== 'string') {
       throw Schema.error(spec, 'type');
     } else if (data === null && spec.nullable === true) {
       return data;
     } else {
+      if (typeof data === 'string' && spec.type !== 'string') {
+        if (opts.coerceTypes === true) {
+          data = this.coerceToType(data, spec.type);
+        }
+      }
       return super.typeValidator(data, spec, path, opts);
     }
   }

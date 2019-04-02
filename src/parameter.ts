@@ -187,23 +187,6 @@ export class ParameterObject extends SchemaObject {
     }
     return out;
   }
-  coerceToType(data: string, type: string): any {
-    let out: any = data;
-    if (typeof out === 'string') {
-      if (type === 'boolean') {
-        if (out === 'true' || out === '1') {
-          out = true;
-        } else if (out === 'false' || out === '0') {
-          out = false;
-        }
-      } else if (type === 'number' || type === 'integer') {
-        out = parseFloat(out);
-      }
-    } else if (out === undefined && type === 'null') {
-      out = null;
-    }
-    return out;
-  }
 
   async validate(data: any, opts: SchemaObjectOptions = {}, path: string = ''): Promise<any> {
     if (this.parameter.content) {
@@ -219,12 +202,17 @@ export class ParameterObject extends SchemaObject {
     } else if (data === '' && spec.nullable === true) {
       return null;
     } else {
+      if (typeof opts.coerceTypes === 'undefined') {
+        opts.coerceTypes = true;
+      }
       if (typeof data === 'string') {
         if (opts.parseStyle !== false) {
           data = this.parseStyle(data, spec.type);
           opts.parseStyle = false;
         }
-        data = this.coerceToType(data, spec.type);
+        if (opts.coerceTypes !== false) {
+          data = this.coerceToType(data, spec.type);
+        }
       }
       if (typeof data === 'undefined') {
         if (this.parameter.required) {
