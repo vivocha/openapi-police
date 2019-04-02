@@ -73,6 +73,9 @@ export class SchemaObject extends Schema {
     return out;
   }
 
+  validate(data: any, opts: SchemaObjectOptions = {}, path: string = ''): Promise<any> {
+    return super.validate(data, opts, path);
+  }
   protected typeValidator(data: any, spec: any, path: string, opts: SchemaObjectOptions): any {
     if (typeof spec.type !== 'string') {
       throw Schema.error(spec, 'type');
