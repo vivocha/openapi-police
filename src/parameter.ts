@@ -1,6 +1,6 @@
-import { Schema, ValidationError, ValidationOptions } from "jsonpolice";
+import { Schema, ValidationError } from "jsonpolice";
 import { ParameterError } from "./errors";
-import { SchemaObject } from "./schema-object";
+import { SchemaObject, SchemaObjectOptions } from "./schema-object";
 import { OpenAPIV3 } from "./types";
 
 const primitiveTypes = [ 'null', 'boolean', 'number', 'integer', 'string' ];
@@ -188,7 +188,7 @@ export class ParameterObject extends SchemaObject {
     return out;
   }
   coerceToType(data: string, type: string): any {
-    let out = this.parseStyle(data, type);
+    let out: any = data;
     if (typeof out === 'string') {
       if (type === 'boolean') {
         if (out === 'true' || out === '1') {
@@ -205,7 +205,7 @@ export class ParameterObject extends SchemaObject {
     return out;
   }
 
-  async validate(data: any, opts: ValidationOptions = {}, path: string = ''): Promise<any> {
+  async validate(data: any, opts: SchemaObjectOptions = {}, path: string = ''): Promise<any> {
     if (this.parameter.content) {
       // TODO validate using the MediaTypeValidator for the correct media type 
       throw new Error('parameter.content not implemented');
@@ -213,13 +213,17 @@ export class ParameterObject extends SchemaObject {
       return super.validate(data, opts, path);
     }
   }
-  protected typeValidator(data: any, spec: any, path: string, opts: ValidationOptions): any {
+  protected typeValidator(data: any, spec: any, path: string, opts: SchemaObjectOptions): any {
     if (typeof spec.type !== 'string') {
       throw Schema.error(spec, 'type');
     } else if (data === '' && spec.nullable === true) {
       return null;
     } else {
       if (typeof data === 'string') {
+        if (opts.parseStyle !== false) {
+          data = this.parseStyle(data, spec.type);
+          opts.parseStyle = false;
+        }
         data = this.coerceToType(data, spec.type);
       }
       if (typeof data === 'undefined') {

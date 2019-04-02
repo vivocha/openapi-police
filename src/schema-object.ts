@@ -4,6 +4,11 @@ import { LII_RE } from 'jsonref/dist/meta';
 import { resolve as resolveRefs } from 'jsonref/dist/ref';
 import { OpenAPIV3 } from './types';
 
+export interface SchemaObjectOptions extends ValidationOptions {
+  parseStyle?: boolean;
+  contentType?: string;
+}
+
 export class SchemaObject extends Schema {
   protected _spec: Promise<OpenAPIV3.SchemaObject>;
 
@@ -49,7 +54,7 @@ export class SchemaObject extends Schema {
     }
     return this._validators;
   }
-  protected typeValidator(data: any, spec: any, path: string, opts: ValidationOptions): any {
+  protected typeValidator(data: any, spec: any, path: string, opts: SchemaObjectOptions): any {
     if (typeof spec.type !== 'string') {
       throw Schema.error(spec, 'type');
     } else if (data === null && spec.nullable === true) {
@@ -58,7 +63,7 @@ export class SchemaObject extends Schema {
       return super.typeValidator(data, spec, path, opts);
     }
   }
-  protected formatValidator(data: any, spec: any, path: string, opts: ValidationOptions): any {
+  protected formatValidator(data: any, spec: any, path: string, opts: SchemaObjectOptions): any {
     if (typeof data === 'string') {
       if (typeof spec.format !== 'string') {
         throw Schema.error(spec, 'format');
@@ -67,7 +72,7 @@ export class SchemaObject extends Schema {
     }
     return data;
   }
-  protected discriminatorValidator(data: any, spec: any, path: string, opts: ValidationOptions): any {
+  protected discriminatorValidator(data: any, spec: any, path: string, opts: SchemaObjectOptions): any {
     if (spec.discriminator === null || typeof spec.discriminator !== 'object' || typeof spec.discriminator.propertyName !== 'string') {
       throw Schema.error(spec, 'discriminator');
     }
@@ -115,14 +120,14 @@ export class SchemaObject extends Schema {
     }
     return data;
   }
-  protected anyOfValidator(data: any, spec: any, path: string, opts: ValidationOptions): any {
+  protected anyOfValidator(data: any, spec: any, path: string, opts: SchemaObjectOptions): any {
     if (typeof spec.discriminator !== 'undefined') {
       return data;
     } else {
       return super.anyOfValidator(data, spec, path, opts);
     }
   }
-  protected oneOfValidator(data: any, spec: any, path: string, opts: ValidationOptions): any {
+  protected oneOfValidator(data: any, spec: any, path: string, opts: SchemaObjectOptions): any {
     if (typeof spec.discriminator !== 'undefined') {
       return data;
     } else {

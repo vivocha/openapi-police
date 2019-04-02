@@ -462,7 +462,7 @@ describe('ParameterObject', function() {
         });
       });
       describe('pipeDelimited', function() {
-        it('should parse', async function() {
+        it('should parse (1)', async function() {
           const opts = { scope: 'http://example.com' };
           const spec = {
             style: 'pipeDelimited',
@@ -474,6 +474,24 @@ describe('ParameterObject', function() {
           const parameter = new ParameterObject(await refs.parse(spec, opts));
           await parameter.validate('').should.eventually.deep.equal(undefined);
           await parameter.validate('blue|black|brown').should.eventually.deep.equal([ 'blue', 'black', 'brown' ]);
+        });
+        it('should parse (2)', async function() {
+          debugger;
+          const opts = { scope: 'http://example.com' };
+          const spec = {
+            style: 'pipeDelimited',
+            in: 'query',
+            schema: {
+              type: 'array',
+              items: {
+                type: 'integer'
+              }
+            }
+          };
+          const parameter = new ParameterObject(await refs.parse(spec, opts));
+          await parameter.validate('').should.eventually.deep.equal(undefined);
+          await parameter.validate('1|2|3').should.eventually.deep.equal([ 1, 2, 3 ]);
+          await parameter.validate('1|2|aaa').should.be.rejectedWith(ValidationError, 'items');
         });
       });
     });
