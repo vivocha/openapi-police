@@ -19,8 +19,8 @@ const typesByStyle = {
 const stylesByLocation = {  
   path: [ 'simple', 'label', 'matrix' ],
   query: [ 'simple', 'spaceDelimited', 'pipeDelimited', 'deepObject' ],
-  cookie: ['form' ],
-  header: [ 'simple' ]
+  cookie: [ 'simple', 'form', 'spaceDelimited', 'pipeDelimited', ],
+  header: [ 'simple', 'form', 'spaceDelimited', 'pipeDelimited', ]
 };
 
 const tuple_re = /^([^=]+)(?:=(.*))?$/
