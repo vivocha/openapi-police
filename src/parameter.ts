@@ -1,6 +1,6 @@
 import { Schema, ValidationError } from "jsonpolice";
 import { ParameterError } from "./errors";
-import { SchemaObject, SchemaObjectOptions } from "./schema-object";
+import { SchemaObjectOptions, StaticSchemaObject } from "./schema-object";
 import { OpenAPIV3 } from "./types";
 
 const primitiveTypes = [ 'null', 'boolean', 'number', 'integer', 'string' ];
@@ -64,7 +64,7 @@ function tuplesToArray(data: string[]): any {
 }
 
 
-export class ParameterObject extends SchemaObject {
+export class ParameterObject extends StaticSchemaObject {
   constructor(protected parameter: OpenAPIV3.ParameterObject) {
     super(parameter.schema as OpenAPIV3.SchemaObject || true);
     if (!(this.parameter.in in stylesByLocation)) {

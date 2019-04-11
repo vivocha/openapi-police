@@ -10,17 +10,8 @@ export interface SchemaObjectOptions extends ValidationOptions {
   contentType?: string;
 }
 
-export class SchemaObject extends Schema {
-  protected _spec: Promise<OpenAPIV3.SchemaObject>;
-
-  constructor(schema: OpenAPIV3.SchemaObject) {
-    super();
-    //getMeta(schema); // throws if schema is not annotated; // TODO should I stay or should I go
-    this._spec = Promise.resolve(schema);
-  }
-  spec(): Promise<OpenAPIV3.SchemaObject> {
-    return this._spec;
-  }
+export abstract class SchemaObject extends Schema {
+  abstract spec(): Promise<OpenAPIV3.SchemaObject>;
 
   protected get validators(): Set<string> {
     if (!this._validators) {
@@ -160,5 +151,17 @@ export class SchemaObject extends Schema {
     } else {
       return super.oneOfValidator(data, spec, path, opts);
     }
+  }
+}
+
+export class StaticSchemaObject extends SchemaObject {
+  protected _spec: OpenAPIV3.SchemaObject;
+
+  constructor(schema: OpenAPIV3.SchemaObject) {
+    super();
+    this._spec = schema;
+  }
+  spec(): Promise<OpenAPIV3.SchemaObject> {
+    return Promise.resolve(this._spec);
   }
 }

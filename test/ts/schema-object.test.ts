@@ -3,7 +3,7 @@ import * as chaiAsPromised from 'chai-as-promised';
 import * as refs from 'jsonref';
 import * as YAML from 'yaml';
 import { SchemaError, ValidationError } from '../../dist/index';
-import { SchemaObject } from '../../dist/schema-object';
+import { StaticSchemaObject } from '../../dist/schema-object';
 
 chai.should();
 chai.use(chaiAsPromised);
@@ -18,7 +18,7 @@ describe('SchemaObject', function() {
         const spec = {
           type: [ 'null', 'string' ]
         };
-        const schema = new SchemaObject(await refs.parse(spec, opts));
+        const schema = new StaticSchemaObject(await refs.parse(spec, opts));
         return schema.validate({}).should.be.rejectedWith(SchemaError, 'type');
       });
       it('should validate a primitive value', async function() {
@@ -26,7 +26,7 @@ describe('SchemaObject', function() {
         const spec = {
           type: 'integer'
         };
-        const schema = new SchemaObject(await refs.parse(spec, opts));
+        const schema = new StaticSchemaObject(await refs.parse(spec, opts));
         await schema.validate(5).should.eventually.equal(5);
         return schema.validate(5.2).should.be.rejectedWith(ValidationError, 'type');
       });
@@ -36,7 +36,7 @@ describe('SchemaObject', function() {
           type: 'integer',
           nullable: true
         };
-        const schema = new SchemaObject(await refs.parse(spec, opts));
+        const schema = new StaticSchemaObject(await refs.parse(spec, opts));
         await schema.validate(5).should.eventually.equal(5);
         return schema.validate(null).should.eventually.equal(null);
       });
@@ -47,7 +47,7 @@ describe('SchemaObject', function() {
         const spec = {
           format: 10
         };
-        const schema = new SchemaObject(await refs.parse(spec, opts));
+        const schema = new StaticSchemaObject(await refs.parse(spec, opts));
         return schema.validate('abc').should.be.rejectedWith(SchemaError, 'format');
       });
       it('should validate with format', async function() {
@@ -55,7 +55,7 @@ describe('SchemaObject', function() {
         const spec = {
           format: "TODOTODOTODOTODOTODOTODOTODO"
         };
-        const schema = new SchemaObject(await refs.parse(spec, opts));
+        const schema = new StaticSchemaObject(await refs.parse(spec, opts));
         return schema.validate('test').should.eventually.equal('test');
       });
     });
@@ -66,13 +66,13 @@ describe('SchemaObject', function() {
         const spec1 = {
           discriminator: null
         };
-        const schema1 = new SchemaObject(await refs.parse(spec1, opts));
+        const schema1 = new StaticSchemaObject(await refs.parse(spec1, opts));
         await schema1.validate({}).should.be.rejectedWith(SchemaError, 'discriminator');
 
         const spec2 = {
           discriminator: 'test'
         };
-        const schema2 = new SchemaObject(await refs.parse(spec2, opts));
+        const schema2 = new StaticSchemaObject(await refs.parse(spec2, opts));
         await schema2.validate({}).should.be.rejectedWith(SchemaError, 'discriminator');
 
         const spec3 = {
@@ -80,7 +80,7 @@ describe('SchemaObject', function() {
             propertyName: true
           }
         };
-        const schema3 = new SchemaObject(await refs.parse(spec3, opts));
+        const schema3 = new StaticSchemaObject(await refs.parse(spec3, opts));
         return schema3.validate({}).should.be.rejectedWith(SchemaError, 'discriminator');
       });
       it('should fail if the discriminator property is not a string', async function() {
@@ -90,7 +90,7 @@ describe('SchemaObject', function() {
             propertyName: 'type'
           }
         };
-        const schema = new SchemaObject(await refs.parse(spec, opts));
+        const schema = new StaticSchemaObject(await refs.parse(spec, opts));
         return schema.validate({ type: true }).should.be.rejectedWith(ValidationError, 'discriminator');
       });
       it('should fail if the discriminator mapping is not valid', async function() {
@@ -103,7 +103,7 @@ describe('SchemaObject', function() {
             }
           }
         };
-        const schema = new SchemaObject(await refs.parse(spec, opts));
+        const schema = new StaticSchemaObject(await refs.parse(spec, opts));
         return schema.validate({ type: 'test' }).should.be.rejectedWith(SchemaError, 'mapping');
       });
       it('should validate the examples in https://github.com/OAI/OpenAPI-Specification/blob/master/versions/3.0.2.md#discriminatorObject', async function() {
@@ -176,7 +176,7 @@ components:
       
         const parsedSpec = await refs.parse(YAML.parse(spec), opts);
 
-        const petSchema = new SchemaObject(parsedSpec.components.schemas.Pet);
+        const petSchema = new StaticSchemaObject(parsedSpec.components.schemas.Pet);
         await petSchema.validate({
           'petType': 'Cat',
           'name': 'misty'
@@ -194,7 +194,7 @@ components:
           'lovesRocks': 'maybe'
         }).should.be.rejectedWith(ValidationError, 'discriminator');
       
-        const responseSchema = new SchemaObject(parsedSpec.components.responses.MyResponseType);
+        const responseSchema = new StaticSchemaObject(parsedSpec.components.responses.MyResponseType);
         await responseSchema.validate({
           "id": 12345,
           "petType": "Cat"
@@ -203,13 +203,13 @@ components:
           'petType': 'err'
         }).should.be.rejectedWith(SchemaError, 'schema');
 
-        const otherSchema = new SchemaObject(parsedSpec.components.responses.OtherResponseType);
+        const otherSchema = new StaticSchemaObject(parsedSpec.components.responses.OtherResponseType);
         await otherSchema.validate({
           "id": 12345,
           "petType": "Cat"
         }).should.be.fulfilled;
 
-        const thirdSchema = new SchemaObject(parsedSpec.components.responses.SimpleResponseType);
+        const thirdSchema = new StaticSchemaObject(parsedSpec.components.responses.SimpleResponseType);
         await thirdSchema.validate({
           "id": 12345,
           "petType": "Lizard",
