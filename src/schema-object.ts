@@ -96,9 +96,11 @@ export abstract class SchemaObject extends Schema {
     }
 
     let disc = data[spec.discriminator.propertyName];
-    
+
     if (typeof disc !== 'string') {
-      throw new ValidationError(path, Schema.scope(spec), 'discriminator', [ new ValidationError(`${path}/${spec.discriminator.propertyName}`, Schema.scope(spec), 'required') ]);
+      throw new ValidationError(path, Schema.scope(spec), 'discriminator', [
+        new ValidationError(`${path}/${spec.discriminator.propertyName}`, Schema.scope(spec), 'required')
+      ]);
     }
     if (spec.discriminator.mapping && spec.discriminator.mapping[disc]) {
       if (typeof spec.discriminator.mapping[disc] !== 'string') {
@@ -112,7 +114,7 @@ export abstract class SchemaObject extends Schema {
     } else {
       disc = normalizeUri(disc, Schema.scope(spec));
     }
-    
+
     let subSpec;
 
     if ('anyOf' in spec || 'oneOf' in spec) {
@@ -132,8 +134,8 @@ export abstract class SchemaObject extends Schema {
       }
       try {
         data = this.rootValidator(data, subSpec, path, opts);
-      } catch(err) {
-        throw new ValidationError(path, Schema.scope(spec), 'discriminator', [ err ]);
+      } catch (err) {
+        throw new ValidationError(path, Schema.scope(spec), 'discriminator', [err]);
       }
     }
     return data;

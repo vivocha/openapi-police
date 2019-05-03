@@ -1,44 +1,44 @@
-import { Schema, ValidationError } from "jsonpolice";
-import { ParameterError } from "./errors";
-import { SchemaObjectOptions, StaticSchemaObject } from "./schema-object";
-import { OpenAPIV3 } from "./types";
+import { Schema, ValidationError } from 'jsonpolice';
+import { ParameterError } from './errors';
+import { SchemaObjectOptions, StaticSchemaObject } from './schema-object';
+import { OpenAPIV3 } from './types';
 
-const primitiveTypes = [ 'null', 'boolean', 'number', 'integer', 'string' ];
-const allTypes = primitiveTypes.concat([ 'object', 'array' ]);
+const primitiveTypes = ['null', 'boolean', 'number', 'integer', 'string'];
+const allTypes = primitiveTypes.concat(['object', 'array']);
 
 const typesByStyle = {
   matrix: allTypes,
   label: allTypes,
   form: allTypes,
   simple: allTypes,
-  spaceDelimited: [ 'array', 'object' ],
-  pipeDelimited: [ 'array', 'object' ],
-  deepObject: [ 'object' ]
+  spaceDelimited: ['array', 'object'],
+  pipeDelimited: ['array', 'object'],
+  deepObject: ['object']
 };
 
-const stylesByLocation = {  
-  path: [ 'simple', 'label', 'matrix' ],
-  query: [ 'simple', 'spaceDelimited', 'pipeDelimited', 'deepObject' ],
-  cookie: [ 'simple', 'form', 'spaceDelimited', 'pipeDelimited', ],
-  header: [ 'simple', 'form', 'spaceDelimited', 'pipeDelimited', ]
+const stylesByLocation = {
+  path: ['simple', 'label', 'matrix'],
+  query: ['simple', 'spaceDelimited', 'pipeDelimited', 'deepObject'],
+  cookie: ['simple', 'form', 'spaceDelimited', 'pipeDelimited'],
+  header: ['simple', 'form', 'spaceDelimited', 'pipeDelimited']
 };
 
-const tuple_re = /^([^=]+)(?:=(.*))?$/
+const tuple_re = /^([^=]+)(?:=(.*))?$/;
 const matrix_re = /^;([^=]+)(?:=(.*))?$/;
 
-function parseTuple(data: string): { k?: string, v?: string} {
+function parseTuple(data: string): { k?: string; v?: string } {
   const match = data.match(tuple_re);
   if (match) {
-    return { k: match[1], v: match[2] || undefined }
+    return { k: match[1], v: match[2] || undefined };
   } else {
-    return {}
+    return {};
   }
 }
 
 function arrayToObject(data: string[]): any {
   const out = {};
   let k;
-  while(k = data.shift()) {
+  while ((k = data.shift())) {
     out[k] = data.shift();
   }
   return out;
@@ -63,10 +63,9 @@ function tuplesToArray(data: string[]): any {
   });
 }
 
-
 export class ParameterObject extends StaticSchemaObject {
   constructor(protected parameter: OpenAPIV3.ParameterObject) {
-    super(parameter.schema as OpenAPIV3.SchemaObject || true);
+    super((parameter.schema as OpenAPIV3.SchemaObject) || true);
     if (!(this.parameter.in in stylesByLocation)) {
       throw new ParameterError(Schema.scope(this.parameter), 'in', this.parameter.in);
     }
@@ -86,7 +85,7 @@ export class ParameterObject extends StaticSchemaObject {
     }
     let out: any, match: RegExpMatchArray, list: string[] | undefined;
     if (type === 'object') {
-      switch(this.parameter.style) {
+      switch (this.parameter.style) {
         case 'matrix':
           if (this.parameter.explode) {
             list = data ? data.split(';').slice(1) : undefined;
@@ -98,11 +97,11 @@ export class ParameterObject extends StaticSchemaObject {
           }
           break;
         case 'label':
-          list = data ? data.split('.').slice(1) : undefined
+          list = data ? data.split('.').slice(1) : undefined;
           if (this.parameter.explode) {
             out = list ? tuplesToObject(list) : undefined;
           } else {
-            out = list ? arrayToObject(list): undefined;
+            out = list ? arrayToObject(list) : undefined;
           }
           break;
         case 'form':
@@ -135,7 +134,7 @@ export class ParameterObject extends StaticSchemaObject {
           throw new Error('deepObject not implemented');
       }
     } else if (type === 'array') {
-      switch(this.parameter.style) {
+      switch (this.parameter.style) {
         case 'matrix':
           if (this.parameter.explode) {
             list = data ? data.split(';').slice(1) : undefined;
@@ -168,7 +167,7 @@ export class ParameterObject extends StaticSchemaObject {
           break;
       }
     } else {
-      switch(this.parameter.style) {
+      switch (this.parameter.style) {
         case 'matrix':
           match = data.match(matrix_re) || [];
           out = match[2];
@@ -190,7 +189,7 @@ export class ParameterObject extends StaticSchemaObject {
 
   async validate(data: any, opts: SchemaObjectOptions = {}, path: string = ''): Promise<any> {
     if (this.parameter.content) {
-      // TODO validate using the MediaTypeValidator for the correct media type 
+      // TODO validate using the MediaTypeValidator for the correct media type
       throw new Error('parameter.content not implemented');
     } else {
       return super.validate(data, opts, path);

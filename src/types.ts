@@ -239,11 +239,7 @@ export namespace OpenAPIV3 {
     callbacks?: { [key: string]: ReferenceObject | CallbackObject };
   }
 
-  export type SecuritySchemeObject =
-    | HttpSecurityScheme
-    | ApiKeySecurityScheme
-    | OAuth2SecurityScheme
-    | OpenIdSecurityScheme;
+  export type SecuritySchemeObject = HttpSecurityScheme | ApiKeySecurityScheme | OAuth2SecurityScheme | OpenIdSecurityScheme;
 
   export interface HttpSecurityScheme {
     type: 'http';
@@ -260,7 +256,7 @@ export namespace OpenAPIV3 {
   }
 
   export interface OAuth2SecurityScopes {
-    [scope: string]: string
+    [scope: string]: string;
   }
 
   export interface OAuth2SecurityScheme {
@@ -302,4 +298,3 @@ export namespace OpenAPIV3 {
     externalDocs?: ExternalDocumentationObject;
   }
 }
-
