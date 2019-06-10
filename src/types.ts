@@ -130,7 +130,7 @@ export namespace OpenAPIV3 {
     maxItems?: number;
     minItems?: number;
     uniqueItems?: boolean;
-    items?: SchemaObject;
+    items?: ReferenceObject | SchemaObject;
     maxProperties?: number;
     minProperties?: number;
     required?: string[];
