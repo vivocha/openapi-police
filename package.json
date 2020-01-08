@@ -70,8 +70,8 @@
     "yaml": "^1.6.0"
   },
   "dependencies": {
-    "jsonpolice": "^8.0.5",
-    "jsonref": "^5.2.0"
+    "jsonpolice": "^8.1.0",
+    "jsonref": "^5.2.1"
   },
   "config": {
     "commitizen": {
