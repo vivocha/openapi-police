@@ -476,7 +476,6 @@ describe('ParameterObject', function() {
           await parameter.validate('blue|black|brown').should.eventually.deep.equal([ 'blue', 'black', 'brown' ]);
         });
         it('should parse (2)', async function() {
-          debugger;
           const opts = { scope: 'http://example.com' };
           const spec = {
             style: 'pipeDelimited',
