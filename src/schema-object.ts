@@ -41,7 +41,7 @@ export abstract class SchemaObject extends Schema {
         'allOf',
         'anyOf',
         'oneOf',
-        'not'
+        'not',
       ]);
     }
     return this._validators;
@@ -81,15 +81,6 @@ export abstract class SchemaObject extends Schema {
       return super.typeValidator(data, spec, path, opts);
     }
   }
-  protected formatValidator(data: any, spec: any, path: string, opts: SchemaObjectOptions): any {
-    if (typeof data === 'string') {
-      if (typeof spec.format !== 'string') {
-        throw Schema.error(spec, 'format');
-      }
-      // TODO validate format
-    }
-    return data;
-  }
   protected discriminatorValidator(data: any, spec: any, path: string, opts: SchemaObjectOptions): any {
     if (spec.discriminator === null || typeof spec.discriminator !== 'object' || typeof spec.discriminator.propertyName !== 'string') {
       throw Schema.error(spec, 'discriminator');
@@ -99,7 +90,7 @@ export abstract class SchemaObject extends Schema {
 
     if (typeof disc !== 'string') {
       throw new ValidationError(path, Schema.scope(spec), 'discriminator', [
-        new ValidationError(`${path}/${spec.discriminator.propertyName}`, Schema.scope(spec), 'required')
+        new ValidationError(`${path}/${spec.discriminator.propertyName}`, Schema.scope(spec), 'required'),
       ]);
     }
     if (spec.discriminator.mapping && spec.discriminator.mapping[disc]) {
@@ -119,7 +110,7 @@ export abstract class SchemaObject extends Schema {
 
     if ('anyOf' in spec || 'oneOf' in spec) {
       const alts = spec.anyOf || spec.oneOf;
-      subSpec = alts.find(s => Schema.scope(s) === disc);
+      subSpec = alts.find((s) => Schema.scope(s) === disc);
     } else {
       subSpec = resolveRefs({ $ref: disc }, getMeta(spec));
     }
@@ -130,7 +121,7 @@ export abstract class SchemaObject extends Schema {
       if (subSpec.allOf) {
         subSpec = Object.assign({}, subSpec);
         const scope = Schema.scope(spec);
-        subSpec.allOf = subSpec.allOf.filter(s => Schema.scope(s) !== scope);
+        subSpec.allOf = subSpec.allOf.filter((s) => Schema.scope(s) !== scope);
       }
       try {
         data = this.rootValidator(data, subSpec, path, opts);
