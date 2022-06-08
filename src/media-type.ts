@@ -1,6 +1,6 @@
 /*
 import { ValidationOptions } from "jsonpolice";
-import { OpenAPIV3 } from "./types";
+import { OpenAPIV3 } from "./types.js";
 
 export class MediaTypeValidator {
   constructor(protected spec: OpenAPIV3.MediaTypeObject) {

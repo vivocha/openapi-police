@@ -1,5 +1,5 @@
 export * from 'jsonpolice';
-export { ParameterError } from './errors';
-export { ParameterObject } from './parameter';
-export { SchemaObject, SchemaObjectOptions, StaticSchemaObject } from './schema-object';
-export { OpenAPIV3 } from './types';
+export { ParameterError } from './errors.js';
+export { ParameterObject } from './parameter.js';
+export { SchemaObject, SchemaObjectOptions, StaticSchemaObject } from './schema-object.js';
+export { OpenAPIV3 } from './types.js';

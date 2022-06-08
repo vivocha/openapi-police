@@ -1,8 +1,8 @@
 import { Schema, ValidationError, ValidationOptions } from 'jsonpolice';
 import { getMeta, normalizeUri } from 'jsonref';
-import { LII_RE } from 'jsonref/dist/meta';
-import { resolve as resolveRefs } from 'jsonref/dist/ref';
-import { OpenAPIV3 } from './types';
+import { LII_RE } from 'jsonref/dist/meta.js';
+import { resolve as resolveRefs } from 'jsonref/dist/ref.js';
+import { OpenAPIV3 } from './types.js';
 
 export interface SchemaObjectOptions extends ValidationOptions {
   coerceTypes?: boolean;

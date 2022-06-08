@@ -1,7 +1,7 @@
 import { Schema, ValidationError } from 'jsonpolice';
-import { ParameterError } from './errors';
-import { SchemaObjectOptions, StaticSchemaObject } from './schema-object';
-import { OpenAPIV3 } from './types';
+import { ParameterError } from './errors.js';
+import { SchemaObjectOptions, StaticSchemaObject } from './schema-object.js';
+import { OpenAPIV3 } from './types.js';
 
 const primitiveTypes = ['null', 'boolean', 'number', 'integer', 'string'];
 const allTypes = primitiveTypes.concat(['object', 'array']);
@@ -13,14 +13,14 @@ const typesByStyle = {
   simple: allTypes,
   spaceDelimited: ['array', 'object'],
   pipeDelimited: ['array', 'object'],
-  deepObject: ['object']
+  deepObject: ['object'],
 };
 
 const stylesByLocation = {
   path: ['simple', 'label', 'matrix'],
   query: ['simple', 'spaceDelimited', 'pipeDelimited', 'deepObject'],
   cookie: ['simple', 'form', 'spaceDelimited', 'pipeDelimited'],
-  header: ['simple', 'form', 'spaceDelimited', 'pipeDelimited']
+  header: ['simple', 'form', 'spaceDelimited', 'pipeDelimited'],
 };
 
 const tuple_re = /^([^=]+)(?:=(.*))?$/;
@@ -55,7 +55,7 @@ function tuplesToObject(data: string[]): any {
 }
 
 function tuplesToArray(data: string[]): any {
-  return data.map(t => {
+  return data.map((t) => {
     const tuple = parseTuple(t);
     if (tuple && tuple.v) {
       return tuple.v;

@@ -1,6 +1,6 @@
-import * as chai from 'chai';
-import * as chaiAsPromised from 'chai-as-promised';
-import { ParameterError, ParameterObject, SchemaObject, StaticSchemaObject } from '../../dist';
+import chai from 'chai';
+import chaiAsPromised from 'chai-as-promised';
+import { ParameterError, ParameterObject, SchemaObject, StaticSchemaObject } from '../../dist/index.js';
 
 chai.should();
 chai.use(chaiAsPromised);
