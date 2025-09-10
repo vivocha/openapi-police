@@ -1,4 +1,4 @@
-import chai from 'chai';
+import * as chai from 'chai';
 import chaiAsPromised from 'chai-as-promised';
 import { SchemaError, ValidationError } from 'jsonpolice';
 import * as refs from 'jsonref';

@@ -83,7 +83,7 @@ export class ParameterObject extends StaticSchemaObject {
     if (!typesByStyle[this.parameter.style as string].includes(type)) {
       throw new ParameterError(Schema.scope(this.parameter), 'style', this.parameter.style);
     }
-    let out: any, match: RegExpMatchArray, list: string[] | undefined;
+    let out: any, match: RegExpMatchArray | null, list: string[] | undefined;
     if (type === 'object') {
       switch (this.parameter.style) {
         case 'matrix':
@@ -91,8 +91,8 @@ export class ParameterObject extends StaticSchemaObject {
             list = data ? data.split(';').slice(1) : undefined;
             out = list ? tuplesToObject(list) : undefined;
           } else {
-            match = data.match(matrix_re) || [];
-            list = match[2] ? match[2].split(',') : undefined;
+            match = data.match(matrix_re);
+            list = match && match[2] ? match[2].split(',') : undefined;
             out = list ? arrayToObject(list) : undefined;
           }
           break;
@@ -109,8 +109,8 @@ export class ParameterObject extends StaticSchemaObject {
             list = data ? data.split('&') : undefined;
             out = list ? tuplesToObject(list) : undefined;
           } else {
-            match = data.match(tuple_re) || [];
-            list = match[2] ? match[2].split(',') : undefined;
+            match = data.match(tuple_re);
+            list = match && match[2] ? match[2].split(',') : undefined;
             out = list ? arrayToObject(list) : undefined;
           }
           break;
@@ -140,8 +140,8 @@ export class ParameterObject extends StaticSchemaObject {
             list = data ? data.split(';').slice(1) : undefined;
             out = list ? tuplesToArray(list) : undefined;
           } else {
-            match = data.match(matrix_re) || [];
-            out = match[2] ? match[2].split(',') : undefined;
+            match = data.match(matrix_re);
+            out = match && match[2] ? match[2].split(',') : undefined;
           }
           break;
         case 'label':
@@ -152,8 +152,8 @@ export class ParameterObject extends StaticSchemaObject {
             list = data ? data.split('&') : undefined;
             out = list ? tuplesToArray(list) : undefined;
           } else {
-            match = data.match(tuple_re) || [];
-            out = match[2] ? match[2].split(',') : undefined;
+            match = data.match(tuple_re);
+            out = match && match[2] ? match[2].split(',') : undefined;
           }
           break;
         case 'simple':
@@ -169,15 +169,15 @@ export class ParameterObject extends StaticSchemaObject {
     } else {
       switch (this.parameter.style) {
         case 'matrix':
-          match = data.match(matrix_re) || [];
-          out = match[2];
+          match = data.match(matrix_re);
+          out = match ? match[2] : undefined;
           break;
         case 'label':
           out = data ? data.split('.')[1] : undefined;
           break;
         case 'form':
-          match = data.match(tuple_re) || [];
-          out = match[2] || undefined;
+          match = data.match(tuple_re);
+          out = match ? (match[2] || undefined) : undefined;
           break;
         case 'simple':
           out = data || undefined;
