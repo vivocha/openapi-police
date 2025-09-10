@@ -1,6 +1,6 @@
 {
   "name": "openapi-police",
-  "version": "0.0.0",
+  "version": "4.0.4",
   "description": "OpenAPI v3 validators and utilities",
   "type": "module",
   "exports": {
