@@ -1,0 +1,19 @@
+{
+  "permissions": {
+    "allow": [
+      "WebFetch(domain:spec.openapis.org)",
+      "Read(//Users/fpinna/Developer/Vivocha/jsonpolice/**)",
+      "mcp__github__search_repositories",
+      "mcp__github__list_branches",
+      "mcp__github__get_file_contents",
+      "Bash(git checkout:*)",
+      "Bash(pnpm install:*)",
+      "Bash(pnpm run:*)",
+      "Bash(git stash:*)",
+      "Bash(npx mocha test:*)",
+      "mcp__github__create_issue"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}

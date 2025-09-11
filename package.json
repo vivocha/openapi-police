@@ -1,6 +1,6 @@
 {
   "name": "openapi-police",
-  "version": "4.0.5",
+  "version": "5.0.0-beta.1",
   "description": "OpenAPI v3 validators and utilities",
   "type": "module",
   "exports": {
@@ -69,7 +69,7 @@
     "yaml": "^2.4.5"
   },
   "dependencies": {
-    "jsonpolice": "^12.0.1",
+    "jsonpolice": "13.0.0-beta.2",
     "jsonref": "^9.0.0"
   },
   "engines": {

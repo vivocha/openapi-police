@@ -8,8 +8,10 @@ export namespace OpenAPIV3 {
   export interface Document {
     openapi: string;
     info: InfoObject;
+    jsonSchemaDialect?: string;
     servers?: ServerObject[];
     paths: { [path: string]: PathItemObject };
+    webhooks?: { [name: string]: ReferenceObject | PathItemObject };
     components?: ComponentsObject;
     security?: SecurityRequirementObject[];
     tags?: TagObject[];

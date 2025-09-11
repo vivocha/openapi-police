@@ -1,5 +1,6 @@
 import { Schema, ValidationError } from 'jsonpolice';
 import { ParameterError } from './errors.js';
+import { MediaTypeObject } from './media-type.js';
 import { SchemaObjectOptions, StaticSchemaObject } from './schema-object.js';
 import { OpenAPIV3 } from './types.js';
 
@@ -131,7 +132,22 @@ export class ParameterObject extends StaticSchemaObject {
           out = arrayToObject(list);
           break;
         case 'deepObject':
-          throw new Error('deepObject not implemented');
+          // Parse deepObject style: filter[status]=active&filter[priority]=high
+          const deepObj = {};
+          if (data) {
+            const pairs = data.split('&');
+            for (const pair of pairs) {
+              const match = pair.match(/^([^[]+)\[([^\]]+)\](?:=(.*))?$/);
+              if (match) {
+                const [, objName, key, value] = match;
+                if (objName === this.parameter.name) {
+                  deepObj[key] = value || '';
+                }
+              }
+            }
+          }
+          out = Object.keys(deepObj).length > 0 ? deepObj : undefined;
+          break;
       }
     } else if (type === 'array') {
       switch (this.parameter.style) {
@@ -189,8 +205,29 @@ export class ParameterObject extends StaticSchemaObject {
 
   async validate(data: any, opts: SchemaObjectOptions = {}, path: string = ''): Promise<any> {
     if (this.parameter.content) {
-      // TODO validate using the MediaTypeValidator for the correct media type
-      throw new Error('parameter.content not implemented');
+      // Validate using MediaTypeObject for the correct media type
+      const contentType = opts.contentType || 'application/json';
+      const mediaTypeSpec = this.parameter.content[contentType];
+      
+      if (!mediaTypeSpec) {
+        // If exact content type not found, try to find a compatible one
+        const availableTypes = Object.keys(this.parameter.content);
+        const compatibleType = availableTypes.find(type => 
+          type === '*/*' || 
+          type.startsWith(contentType.split('/')[0] + '/') ||
+          contentType.startsWith(type.split('/')[0] + '/')
+        );
+        
+        if (compatibleType) {
+          const mediaType = new MediaTypeObject(this.parameter.content[compatibleType], compatibleType);
+          return mediaType.validate(data, opts, path);
+        } else {
+          throw new ValidationError(path, Schema.scope(this.parameter), 'content-type');
+        }
+      } else {
+        const mediaType = new MediaTypeObject(mediaTypeSpec, contentType);
+        return mediaType.validate(data, opts, path);
+      }
     } else {
       return super.validate(data, opts, path);
     }

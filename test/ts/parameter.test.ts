@@ -72,15 +72,20 @@ describe('ParameterObject', function () {
       const parameter = new ParameterObject(await refs.parse(spec, opts));
       return parameter.validate(undefined).should.be.rejectedWith(ValidationError, 'required');
     });
-    it('should fail if a content is specified', async function () {
+    it('should validate using content when specified', async function () {
       const opts = { scope: 'http://example.com' };
       const spec = {
         in: 'path',
         required: true,
-        content: {},
+        content: {
+          'application/json': {
+            schema: { type: 'integer' }
+          }
+        },
       };
       const parameter = new ParameterObject(await refs.parse(spec, opts));
-      return parameter.validate(5).should.be.rejectedWith(Error, /not implemented/);
+      await parameter.validate(5, { contentType: 'application/json' }).should.eventually.equal(5);
+      return parameter.validate('not-integer', { contentType: 'application/json' }).should.be.rejectedWith(ValidationError, 'type');
     });
   });
 
@@ -300,9 +305,10 @@ describe('ParameterObject', function () {
         });
       });
       describe('deepObject', function () {
-        it('should fail', async function () {
+        it('should parse deepObject parameters', async function () {
           const opts = { scope: 'http://example.com' };
           const spec = {
+            name: 'color',
             style: 'deepObject',
             in: 'query',
             required: true,
@@ -311,7 +317,20 @@ describe('ParameterObject', function () {
             },
           };
           const parameter = new ParameterObject(await refs.parse(spec, opts));
-          await parameter.validate('.R.100.G.200.B.150').should.be.rejectedWith(Error, /not implemented/);
+          await parameter.validate('color[R]=100&color[G]=200&color[B]=150').should.eventually.deep.equal({ R: '100', G: '200', B: '150' });
+        });
+        it('should parse deepObject parameters with empty values', async function () {
+          const opts = { scope: 'http://example.com' };
+          const spec = {
+            name: 'filter',
+            style: 'deepObject',
+            in: 'query',
+            schema: {
+              type: 'object',
+            },
+          };
+          const parameter = new ParameterObject(await refs.parse(spec, opts));
+          await parameter.validate('filter[empty]&filter[hasValue]=test').should.eventually.deep.equal({ empty: '', hasValue: 'test' });
         });
       });
     });
@@ -554,6 +573,137 @@ describe('ParameterObject', function () {
           await parameter.validate('').should.eventually.equal(null);
           await parameter.validate('blue').should.be.rejectedWith(ValidationError, 'type');
         });
+      });
+    });
+  });
+
+  describe('OpenAPI 3.1 features', function () {
+    describe('deepObject style', function () {
+      it('should parse deepObject style parameters', async function () {
+        const opts = { scope: 'http://example.com' };
+        const spec = {
+          name: 'filter',
+          in: 'query',
+          style: 'deepObject',
+          explode: true,
+          schema: {
+            type: 'object',
+            properties: {
+              status: { type: 'string' },
+              priority: { type: 'string' }
+            }
+          }
+        };
+        const parameter = new ParameterObject(await refs.parse(spec, opts));
+        
+        // Test valid deepObject parsing
+        await parameter.validate('filter[status]=active&filter[priority]=high')
+          .should.eventually.deep.equal({ status: 'active', priority: 'high' });
+        
+        // Test empty case
+        await parameter.validate('').should.eventually.equal(undefined);
+        
+        // Test single property
+        await parameter.validate('filter[status]=active').should.eventually.deep.equal({ status: 'active' });
+      });
+
+      it('should handle deepObject with different parameter names', async function () {
+        const opts = { scope: 'http://example.com' };
+        const spec = {
+          name: 'search',
+          in: 'query',
+          style: 'deepObject',
+          explode: true,
+          schema: {
+            type: 'object',
+            properties: {
+              term: { type: 'string' },
+              limit: { type: 'integer' }
+            }
+          }
+        };
+        const parameter = new ParameterObject(await refs.parse(spec, opts));
+        
+        // Should ignore parameters that don't match the parameter name
+        await parameter.validate('filter[status]=active&search[term]=hello&other[value]=ignored')
+          .should.eventually.deep.equal({ term: 'hello' });
+      });
+    });
+
+    describe('parameter content validation', function () {
+      it('should validate parameter with content instead of schema', async function () {
+        const opts = { scope: 'http://example.com' };
+        const spec = {
+          name: 'data',
+          in: 'query',
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                properties: {
+                  id: { type: 'string' },
+                  value: { type: 'number' }
+                },
+                required: ['id']
+              }
+            }
+          }
+        };
+        const parameter = new ParameterObject(await refs.parse(spec, opts));
+        
+        const validData = { id: 'test', value: 42 };
+        await parameter.validate(validData, { contentType: 'application/json' })
+          .should.eventually.deep.equal(validData);
+      });
+
+      it('should reject parameter with unsupported content type', async function () {
+        const opts = { scope: 'http://example.com' };
+        const spec = {
+          name: 'data',
+          in: 'query',
+          content: {
+            'application/json': {
+              schema: { type: 'string' }
+            }
+          }
+        };
+        const parameter = new ParameterObject(await refs.parse(spec, opts));
+        
+        await parameter.validate('test', { contentType: 'text/plain' })
+          .should.be.rejectedWith(ValidationError, 'content-type');
+      });
+
+      it('should use wildcard content type when available', async function () {
+        const opts = { scope: 'http://example.com' };
+        const spec = {
+          name: 'data',
+          in: 'query',
+          content: {
+            '*/*': {
+              schema: { type: 'string' }
+            }
+          }
+        };
+        const parameter = new ParameterObject(await refs.parse(spec, opts));
+        
+        await parameter.validate('test', { contentType: 'text/plain' })
+          .should.eventually.equal('test');
+      });
+
+      it('should default to application/json when no contentType is specified', async function () {
+        const opts = { scope: 'http://example.com' };
+        const spec = {
+          name: 'data',
+          in: 'query',
+          content: {
+            'application/json': {
+              schema: { type: 'string' }
+            }
+          }
+        };
+        const parameter = new ParameterObject(await refs.parse(spec, opts));
+        
+        await parameter.validate('test').should.eventually.equal('test');
       });
     });
   });
