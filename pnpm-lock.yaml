@@ -6,11 +6,11 @@ settings:
 
 dependencies:
   jsonpolice:
-    specifier: ^11.0.2
-    version: 11.0.2
+    specifier: ^12.0.1
+    version: 12.0.1
   jsonref:
-    specifier: ^8.0.8
-    version: 8.0.8
+    specifier: ^9.0.0
+    version: 9.0.2
 
 devDependencies:
   '@changesets/cli':
@@ -2008,17 +2008,17 @@ packages:
       graceful-fs: 4.2.11
     dev: true
 
-  /jsonpolice@11.0.2:
-    resolution: {integrity: sha512-lat6tHUNpxAqGf4jDINAak/KgPPCs76n8fcU/KwMaRw4j/qTnmC7A3J0pWlOLzj8KNTz6uQ+henn6ITHuhv+Ig==}
-    engines: {node: '>=16.14.0'}
+  /jsonpolice@12.0.1:
+    resolution: {integrity: sha512-A9XzzaxMNZyWiUrx7z2TQLaj3OCYXjT8fwmaDpuudcMn+oZ36IiAlnTlGBfBz+oSBiIjXbVEDWrpc5VJDcBCkw==}
+    engines: {node: '>=18.17.0'}
     dependencies:
-      jsonref: 8.0.8
+      jsonref: 9.0.2
       lodash: 4.17.21
     dev: false
 
-  /jsonref@8.0.8:
-    resolution: {integrity: sha512-K978Ev7Gsq0aDvyLNI7N717Ya8OIISIm2Rv1o37V8sOfxsN6q71P3lpvtC2Kob5Q+HaJx2JEtwT4E2ZtFH/H/w==}
-    engines: {node: '>=16.14.0'}
+  /jsonref@9.0.2:
+    resolution: {integrity: sha512-XrEwAyAS8cF3m+OLOT2iRs0/6r4F2eNI9OFg7g4z+D9WCPjLtjZ9ZZ727/waRTRy/Yjw905ZWVA7wgIsxUTiZA==}
+    engines: {node: '>=18.17.0'}
     dev: false
 
   /lines-and-columns@1.2.4:

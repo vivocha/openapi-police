@@ -8,14 +8,14 @@ A powerful JavaScript library providing OpenAPI v3 validators and utilities for 
 
 ## Features
 
-- ✅ **OpenAPI v3 Compliance**: Full support for OpenAPI 3.0+ specification
+- ✅ **OpenAPI v3 Compliance**: Full support for OpenAPI 3.0+ and 3.1 specifications
 - ✅ **Parameter Validation**: Handle path, query, header, and cookie parameters with style parsing
 - ✅ **Schema Extensions**: OpenAPI-specific schema enhancements (discriminator, nullable, etc.)
 - ✅ **Style Parsing**: Support for parameter serialization styles (matrix, label, form, simple, etc.)
 - ✅ **Format Validation**: Extended format validation for OpenAPI types
 - ✅ **TypeScript Support**: Full TypeScript definitions included
 - ✅ **Modern ES Modules**: Supports both ESM and CommonJS
-- ✅ **Built on jsonpolice**: Leverages proven JSON Schema validation foundation
+- ✅ **Built on jsonpolice**: Leverages proven JSON Schema validation foundation with JSON Schema 2020-12 support
 
 ## Installation
 
@@ -408,6 +408,167 @@ const includes = queryParam.parseStyle('profile,settings,preferences');
 
 await pathParam.validate(userId);
 await queryParam.validate(includes);
+```
+
+## OpenAPI 3.1 Features
+
+openapi-police now supports OpenAPI 3.1 specification features:
+
+### JSON Schema 2020-12 Support
+
+OpenAPI 3.1 aligns with JSON Schema Draft 2020-12, providing enhanced validation capabilities:
+
+```javascript
+import { SchemaObject } from 'openapi-police';
+
+const schema = new SchemaObject({
+  type: 'object',
+  properties: {
+    // OpenAPI 3.1 can specify the JSON Schema dialect
+    name: { type: 'string' },
+    tags: { 
+      type: 'array',
+      items: { type: 'string' },
+      prefixItems: [{ const: 'primary' }] // JSON Schema 2020-12 feature
+    }
+  }
+});
+```
+
+### Webhooks Support
+
+OpenAPI 3.1 introduces webhooks for describing incoming HTTP requests:
+
+```javascript
+const openApiDoc = {
+  openapi: '3.1.0',
+  info: { title: 'Webhook API', version: '1.0.0' },
+  paths: {},
+  webhooks: {
+    'newPet': {
+      post: {
+        requestBody: {
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                properties: {
+                  id: { type: 'integer' },
+                  name: { type: 'string' }
+                }
+              }
+            }
+          }
+        },
+        responses: {
+          '200': { description: 'Webhook processed' }
+        }
+      }
+    }
+  }
+};
+```
+
+### Deep Object Parameter Style
+
+Now supports the `deepObject` style for complex query parameters:
+
+```javascript
+import { ParameterObject } from 'openapi-police';
+
+const deepParam = new ParameterObject({
+  name: 'filter',
+  in: 'query',
+  style: 'deepObject',
+  explode: true,
+  schema: {
+    type: 'object',
+    properties: {
+      status: { type: 'string' },
+      priority: { type: 'string' },
+      tags: { 
+        type: 'array',
+        items: { type: 'string' }
+      }
+    }
+  }
+});
+
+// Parse: ?filter[status]=active&filter[priority]=high&filter[tags]=urgent&filter[tags]=api
+const parsed = deepParam.parseStyle('filter[status]=active&filter[priority]=high&filter[tags]=urgent&filter[tags]=api');
+console.log(parsed); // { status: 'active', priority: 'high', tags: ['urgent', 'api'] }
+```
+
+### Parameter Content Validation
+
+Enhanced support for parameter content validation:
+
+```javascript
+import { ParameterObject } from 'openapi-police';
+
+const contentParam = new ParameterObject({
+  name: 'data',
+  in: 'query',
+  content: {
+    'application/json': {
+      schema: {
+        type: 'object',
+        properties: {
+          filters: {
+            type: 'array',
+            items: { type: 'string' }
+          },
+          options: {
+            type: 'object',
+            properties: {
+              limit: { type: 'integer', minimum: 1 },
+              offset: { type: 'integer', minimum: 0 }
+            }
+          }
+        }
+      }
+    },
+    'application/xml': {
+      schema: { type: 'string' }
+    }
+  }
+});
+
+// Validate with content type
+const jsonData = { 
+  filters: ['active', 'verified'],
+  options: { limit: 10, offset: 0 }
+};
+
+await contentParam.validate(jsonData, { contentType: 'application/json' });
+```
+
+### JSON Schema Dialect
+
+OpenAPI 3.1 documents can specify their JSON Schema dialect:
+
+```javascript
+const openApi31Doc = {
+  openapi: '3.1.0',
+  info: { title: 'Modern API', version: '2.0.0' },
+  jsonSchemaDialect: 'https://json-schema.org/draft/2020-12/schema',
+  paths: {
+    '/items': {
+      get: {
+        parameters: [{
+          name: 'search',
+          in: 'query',
+          schema: {
+            type: 'object',
+            patternProperties: {
+              '^[a-zA-Z]+$': { type: 'string' }
+            }
+          }
+        }]
+      }
+    }
+  }
+};
 ```
 
 ## Performance Tips

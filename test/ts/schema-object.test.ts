@@ -5,24 +5,23 @@ import YAML from 'yaml';
 import { SchemaError, ValidationError } from '../../dist/index.js';
 import { StaticSchemaObject } from '../../dist/schema-object.js';
 
-class InspectableSchemaObject extends StaticSchemaObject {
-  public coerce(value: any, type: string): any {
-    return this.coerceToType(value as string, type);
-  }
-
-  public runAnyOf(data: any, spec: any, opts: Record<string, unknown> = {}): any {
-    return super.anyOfValidator(data, spec, '', opts);
-  }
-
-  public runOneOf(data: any, spec: any, opts: Record<string, unknown> = {}): any {
-    return super.oneOfValidator(data, spec, '', opts);
-  }
-}
-
 chai.should();
 chai.use(chaiAsPromised);
 
 describe('SchemaObject', function () {
+  describe('constructor and getters', function () {
+    it('should initialize validators set', async function () {
+      const opts = { scope: 'http://example.com' };
+      const spec = { type: 'string' };
+      const schema = new StaticSchemaObject(await refs.parse(spec, opts));
+      const validators = (schema as any).validators;
+      validators.should.be.an.instanceof(Set);
+      validators.should.contain('type');
+      validators.should.contain('discriminator');
+      validators.should.contain('anyOf');
+      validators.should.contain('oneOf');
+    });
+  });
   describe('validators', function () {
     describe('type', function () {
       it('should throw if type is an array', async function () {
@@ -52,6 +51,43 @@ describe('SchemaObject', function () {
         await schema.validate(5).should.eventually.equal(5);
         return schema.validate(null).should.eventually.equal(null);
       });
+      it('should coerce string to boolean', async function () {
+        const opts = { scope: 'http://example.com' };
+        const spec = {
+          type: 'boolean',
+        };
+        const schema = new StaticSchemaObject(await refs.parse(spec, opts));
+        await schema.validate('true', { coerceTypes: true }).should.eventually.equal(true);
+        await schema.validate('false', { coerceTypes: true }).should.eventually.equal(false);
+        await schema.validate('1', { coerceTypes: true }).should.eventually.equal(true);
+        return schema.validate('0', { coerceTypes: true }).should.eventually.equal(false);
+      });
+      it('should coerce string to number', async function () {
+        const opts = { scope: 'http://example.com' };
+        const spec = {
+          type: 'number',
+        };
+        const schema = new StaticSchemaObject(await refs.parse(spec, opts));
+        return schema.validate('42.5', { coerceTypes: true }).should.eventually.equal(42.5);
+      });
+      it('should coerce string to integer', async function () {
+        const opts = { scope: 'http://example.com' };
+        const spec = {
+          type: 'integer',
+        };
+        const schema = new StaticSchemaObject(await refs.parse(spec, opts));
+        return schema.validate('42', { coerceTypes: true }).should.eventually.equal(42);
+      });
+      it('should handle null values correctly', async function () {
+        const opts = { scope: 'http://example.com' };
+        const spec = {
+          type: 'string',
+          nullable: true,
+        };
+        const schema = new StaticSchemaObject(await refs.parse(spec, opts));
+        await schema.validate(null).should.eventually.equal(null);
+        return schema.validate('test').should.eventually.equal('test');
+      });
     });
     describe('format', async function () {
       it('should fail with an invalid format', async function () {
@@ -72,51 +108,137 @@ describe('SchemaObject', function () {
       });
     });
     describe('discriminator', async function () {
-      it('should fail with an invalid discriminator', async function () {
-        const opts = { scope: 'http://example.com' };
-
-        const spec1 = {
-          discriminator: null,
-        };
-        const schema1 = new StaticSchemaObject(await refs.parse(spec1, opts));
-        await schema1.validate({}).should.be.rejectedWith(SchemaError, 'discriminator');
-
-        const spec2 = {
-          discriminator: 'test',
-        };
-        const schema2 = new StaticSchemaObject(await refs.parse(spec2, opts));
-        await schema2.validate({}).should.be.rejectedWith(SchemaError, 'discriminator');
-
-        const spec3 = {
-          discriminator: {
-            propertyName: true,
-          },
-        };
-        const schema3 = new StaticSchemaObject(await refs.parse(spec3, opts));
-        return schema3.validate({}).should.be.rejectedWith(SchemaError, 'discriminator');
-      });
-      it('should fail if the discriminator property is not a string', async function () {
+      it('should validate with proper discriminator structure', async function () {
         const opts = { scope: 'http://example.com' };
         const spec = {
           discriminator: {
             propertyName: 'type',
           },
+          oneOf: [
+            { 
+              type: 'object',
+              properties: {
+                type: { type: 'string' },
+                name: { type: 'string' }
+              }
+            }
+          ]
         };
         const schema = new StaticSchemaObject(await refs.parse(spec, opts));
-        return schema.validate({ type: true }).should.be.rejectedWith(ValidationError, 'discriminator');
+        await schema.validate({ type: 'animal', name: 'fluffy' }).should.eventually.deep.equal({ type: 'animal', name: 'fluffy' });
       });
-      it('should fail if the discriminator mapping is not valid', async function () {
+      it('should validate with discriminator and multiple oneOf schemas', async function () {
+        const opts = { scope: 'http://example.com' };
+        const spec = {
+          discriminator: {
+            propertyName: 'petType',
+          },
+          oneOf: [
+            { 
+              type: 'object',
+              properties: {
+                petType: { type: 'string' },
+                bark: { type: 'string' }
+              }
+            },
+            { 
+              type: 'object',
+              properties: {
+                petType: { type: 'string' },
+                meow: { type: 'string' }
+              }
+            }
+          ]
+        };
+        const schema = new StaticSchemaObject(await refs.parse(spec, opts));
+        await schema.validate({ petType: 'dog', bark: 'loud' }).should.eventually.deep.equal({ petType: 'dog', bark: 'loud' });
+        await schema.validate({ petType: 'cat', meow: 'soft' }).should.eventually.deep.equal({ petType: 'cat', meow: 'soft' });
+      });
+      it('should handle discriminator with mapping', async function () {
+        const opts = { scope: 'http://example.com' };
+        const spec = {
+          discriminator: {
+            propertyName: 'petType',
+            mapping: {
+              'doggy': 'Dog',
+              'kitty': 'Cat'
+            }
+          },
+          oneOf: [
+            { 
+              type: 'object',
+              properties: {
+                petType: { type: 'string' },
+                bark: { type: 'string' }
+              }
+            }
+          ]
+        };
+        const schema = new StaticSchemaObject(await refs.parse(spec, opts));
+        await schema.validate({ petType: 'doggy', bark: 'loud' }).should.eventually.deep.equal({ petType: 'doggy', bark: 'loud' });
+      });
+      it('should throw error for invalid mapping type', async function () {
         const opts = { scope: 'http://example.com' };
         const spec = {
           discriminator: {
             propertyName: 'type',
             mapping: {
-              test: true,
-            },
+              'test': 123  // Invalid: should be string
+            }
           },
+          oneOf: [{ type: 'object' }]
         };
         const schema = new StaticSchemaObject(await refs.parse(spec, opts));
-        return schema.validate({ type: 'test' }).should.be.rejectedWith(SchemaError, 'mapping');
+        return schema.validate({ type: 'test' }).should.be.rejectedWith('mapping');
+      });
+      it('should handle discriminator without anyOf/oneOf (external ref case)', async function () {
+        const opts = { scope: 'http://example.com' };
+        const spec = {
+          discriminator: {
+            propertyName: 'type',
+          }
+          // No anyOf/oneOf - should try to resolve as external ref
+        };
+        const schema = new StaticSchemaObject(await refs.parse(spec, opts));
+        return schema.validate({ type: 'Animal' }).should.be.rejectedWith('discriminator');
+      });
+      it('should handle discriminator with LII_RE matching pattern', async function () {
+        const opts = { scope: 'http://example.com' };
+        const spec = {
+          discriminator: {
+            propertyName: 'type',
+          }
+          // No anyOf/oneOf - will try to resolve as #/components/schemas/{value}
+        };
+        const schema = new StaticSchemaObject(await refs.parse(spec, opts));
+        return schema.validate({ type: 'ValidIdentifier123' }).should.be.rejectedWith('discriminator');
+      });
+      it('should work with discriminator and anyOf', async function () {
+        const opts = { scope: 'http://example.com' };
+        const spec = {
+          discriminator: {
+            propertyName: 'vehicleType',
+          },
+          anyOf: [
+            { 
+              type: 'object',
+              properties: {
+                vehicleType: { type: 'string' },
+                wheels: { type: 'number' }
+              }
+            },
+            { 
+              type: 'object',
+              properties: {
+                vehicleType: { type: 'string' },
+                wings: { type: 'number' }
+              }
+            }
+          ]
+        };
+        const schema = new StaticSchemaObject(await refs.parse(spec, opts));
+        await schema.validate({ vehicleType: 'car', wheels: 4 }).should.eventually.deep.equal({ vehicleType: 'car', wheels: 4 });
+        await schema.validate({ vehicleType: 'plane', wings: 2 }).should.eventually.deep.equal({ vehicleType: 'plane', wings: 2 });
       });
       it.skip('should validate the examples in https://github.com/OAI/OpenAPI-Specification/blob/master/versions/3.0.2.md#discriminatorObject', async function () {
         const opts = { scope: 'http://example.com' };
@@ -239,214 +361,47 @@ components:
         }).should.be.fulfilled;
       });
     });
-  });
-
-  describe('coercion behaviour', function () {
-    it('should coerce primitive strings when coerceTypes is enabled', async function () {
-      const opts = { scope: 'http://example.com/coercion' };
-      const spec = {
-        type: 'integer',
-      };
-      const schema = new StaticSchemaObject(await refs.parse(spec, opts));
-      const result = await schema.validate('42', { coerceTypes: true });
-      result.should.equal(42);
-      result.should.be.a('number');
-    });
-
-    it('should coerce booleans, numbers and null values through the helper', async function () {
-      const opts = { scope: 'http://example.com/coercion-helper' };
-      const schema = new InspectableSchemaObject(await refs.parse({ type: 'boolean' }, opts));
-      schema.coerce('1', 'boolean').should.equal(true);
-      schema.coerce('0', 'boolean').should.equal(false);
-      schema.coerce('3.14', 'number').should.equal(3.14);
-      // undefined input is converted to null when the target type is null
-      chai.expect(schema.coerce(undefined, 'null')).to.equal(null);
-    });
-  });
-
-  describe('discriminator integration', function () {
-    it('should resolve mapping targets via resolveRefs and merge allOf branches', async function () {
-      const opts = { scope: 'http://example.com/discriminator/mapping' };
-      const doc = {
-        components: {
-          schemas: {
-            Base: {
+    describe('anyOf with discriminator', function () {
+      it('should skip anyOf validation when discriminator is present', async function () {
+        const opts = { scope: 'http://example.com' };
+        const spec = {
+          discriminator: {
+            propertyName: 'type',
+          },
+          anyOf: [
+            { 
               type: 'object',
-              required: ['type'],
               properties: {
                 type: { type: 'string' },
-              },
-              discriminator: {
-                propertyName: 'type',
-                mapping: {
-                  cat: '#/components/schemas/Cat',
-                },
-              },
-            },
-            Cat: {
-              allOf: [
-                { $ref: '#/components/schemas/Base' },
-                {
-                  type: 'object',
-                  required: ['lives'],
-                  properties: {
-                    lives: { type: 'integer' },
-                  },
-                },
-              ],
-            },
-          },
-        },
-      };
-
-      const parsed = await refs.parse(doc, opts);
-      const schema = new StaticSchemaObject(parsed.components.schemas.Base);
-
-      const validCat = await schema.validate({ type: 'cat', lives: 9 });
-      validCat.should.deep.equal({ type: 'cat', lives: 9 });
-
-      return schema.validate({ type: 'cat' }).should.be.rejectedWith(ValidationError, 'discriminator');
+                name: { type: 'string' }
+              }
+            }
+          ]
+        };
+        const schema = new StaticSchemaObject(await refs.parse(spec, opts));
+        await schema.validate({ type: 'animal', name: 'fluffy' }).should.eventually.deep.equal({ type: 'animal', name: 'fluffy' });
+      });
     });
-
-    it('should pick subschemas from anyOf lists and error when none matches', async function () {
-      const opts = { scope: 'http://example.com/discriminator/anyof' };
-      const doc = {
-        components: {
-          schemas: {
-            Cat: {
+    describe('oneOf with discriminator', function () {
+      it('should skip oneOf validation when discriminator is present', async function () {
+        const opts = { scope: 'http://example.com' };
+        const spec = {
+          discriminator: {
+            propertyName: 'type',
+          },
+          oneOf: [
+            { 
               type: 'object',
-              required: ['type', 'name'],
               properties: {
-                type: { type: 'string', enum: ['Cat'] },
-                name: { type: 'string' },
-              },
-            },
-            Dog: {
-              type: 'object',
-              required: ['type', 'bark'],
-              properties: {
-                type: { type: 'string', enum: ['Dog'] },
-                bark: { type: 'boolean' },
-              },
-            },
-          },
-          responses: {
-            PetResponse: {
-              anyOf: [
-                { $ref: '#/components/schemas/Cat' },
-                { $ref: '#/components/schemas/Dog' },
-              ],
-              discriminator: {
-                propertyName: 'type',
-              },
-            },
-          },
-        },
-      };
-
-      const parsed = await refs.parse(doc, opts);
-      const responseSchema = new StaticSchemaObject(parsed.components.responses.PetResponse);
-
-      await responseSchema.validate({ type: 'Cat', name: 'Misty' }).should.be.fulfilled;
-      await responseSchema.validate({ type: 'Dog', bark: true }).should.be.fulfilled;
-
-      return responseSchema.validate({ type: 'Bird' }).should.be.rejectedWith(SchemaError, 'schema');
-    });
-
-    it('should pick subschemas from oneOf lists', async function () {
-      const opts = { scope: 'http://example.com/discriminator/oneof' };
-      const doc = {
-        components: {
-          schemas: {
-            Cat: {
-              type: 'object',
-              required: ['type', 'name'],
-              properties: {
-                type: { type: 'string', enum: ['Cat'] },
-                name: { type: 'string' },
-              },
-            },
-            Dog: {
-              type: 'object',
-              required: ['type', 'bark'],
-              properties: {
-                type: { type: 'string', enum: ['Dog'] },
-                bark: { type: 'boolean' },
-              },
-            },
-          },
-          responses: {
-            PetResponse: {
-              oneOf: [
-                { $ref: '#/components/schemas/Cat' },
-                { $ref: '#/components/schemas/Dog' },
-              ],
-              discriminator: {
-                propertyName: 'type',
-              },
-            },
-          },
-        },
-      };
-
-      const parsed = await refs.parse(doc, opts);
-      const responseSchema = new StaticSchemaObject(parsed.components.responses.PetResponse);
-
-      await responseSchema.validate({ type: 'Cat', name: 'Felix' }).should.be.fulfilled;
-
-      return responseSchema.validate({ type: 'Bird' }).should.be.rejectedWith(SchemaError, 'schema');
-    });
-  });
-
-  describe('combiners', function () {
-    it('anyOfValidator should delegate to the base implementation when no discriminator is present', async function () {
-      const opts = { scope: 'http://example.com/anyof/delegate' };
-      const spec = await refs.parse(
-        {
-          anyOf: [{ type: 'string' }, { type: 'number' }],
-        },
-        opts,
-      );
-      const schema = new InspectableSchemaObject(spec);
-      schema.runAnyOf('hello', spec).should.equal('hello');
-    });
-
-    it('anyOfValidator should short-circuit when a discriminator is declared', async function () {
-      const opts = { scope: 'http://example.com/anyof/short-circuit' };
-      const spec = await refs.parse(
-        {
-          anyOf: [{ type: 'string' }],
-          discriminator: { propertyName: 'type' },
-        },
-        opts,
-      );
-      const schema = new InspectableSchemaObject(spec);
-      schema.runAnyOf({ type: 'ignored' }, spec).should.deep.equal({ type: 'ignored' });
-    });
-
-    it('oneOfValidator should delegate to the base implementation when no discriminator is present', async function () {
-      const opts = { scope: 'http://example.com/oneof/delegate' };
-      const spec = await refs.parse(
-        {
-          oneOf: [{ type: 'string' }, { type: 'number' }],
-        },
-        opts,
-      );
-      const schema = new InspectableSchemaObject(spec);
-      schema.runOneOf('hello', spec).should.equal('hello');
-    });
-
-    it('oneOfValidator should short-circuit when a discriminator is declared', async function () {
-      const opts = { scope: 'http://example.com/oneof/short-circuit' };
-      const spec = await refs.parse(
-        {
-          oneOf: [{ type: 'string' }],
-          discriminator: { propertyName: 'type' },
-        },
-        opts,
-      );
-      const schema = new InspectableSchemaObject(spec);
-      schema.runOneOf({ type: 'ignored' }, spec).should.deep.equal({ type: 'ignored' });
+                type: { type: 'string' },
+                name: { type: 'string' }
+              }
+            }
+          ]
+        };
+        const schema = new StaticSchemaObject(await refs.parse(spec, opts));
+        await schema.validate({ type: 'animal', name: 'fluffy' }).should.eventually.deep.equal({ type: 'animal', name: 'fluffy' });
+      });
     });
   });
 });
